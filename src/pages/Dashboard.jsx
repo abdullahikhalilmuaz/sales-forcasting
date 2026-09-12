@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import DashboardCard from "../components/DashboardCard";
+import { Wallet, Package, ShoppingCart, TrendingUp, Star } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -39,7 +40,6 @@ const Dashboard = () => {
 
   if (loading) return <div className="page-loading">Loading dashboard...</div>;
 
-  // Build chart data: revenue per day (last 10)
   const chartData = sales
     .slice(0, 10)
     .reverse()
@@ -60,31 +60,31 @@ const Dashboard = () => {
         <DashboardCard
           title="Total Revenue"
           value={`₦${(summary?.totalRevenue || 0).toLocaleString()}`}
-          icon="💰"
+          icon={<Wallet />}
           color="#10b981"
         />
         <DashboardCard
           title="Total Products"
           value={summary?.totalProducts || 0}
-          icon="📦"
+          icon={<Package />}
           color="#3b82f6"
         />
         <DashboardCard
           title="Total Sales"
           value={summary?.totalSales || 0}
-          icon="🛒"
+          icon={<ShoppingCart />}
           color="#f59e0b"
         />
         <DashboardCard
           title="Forecast Next Month"
           value={Math.round(summary?.nextMonthForecast || 0)}
-          icon="📈"
+          icon={<TrendingUp />}
           color="#8b5cf6"
         />
         <DashboardCard
           title="Best Selling"
           value={summary?.bestSelling || "N/A"}
-          icon="⭐"
+          icon={<Star />}
           color="#ef4444"
         />
       </div>

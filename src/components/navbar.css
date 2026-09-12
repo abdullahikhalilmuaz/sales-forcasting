@@ -13,6 +13,9 @@
 }
 
 .navbar-brand a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.25rem;
   font-weight: 700;
   color: #fff;
@@ -43,9 +46,12 @@
   background: #ef4444;
   color: white;
   border: none;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 6px;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition: background 0.2s;
 }
 
@@ -59,5 +65,8 @@
   }
   .navbar-user {
     display: none;
+  }
+  .logout-btn span {
+    display: none; /* show only the icon on mobile */
   }
 }

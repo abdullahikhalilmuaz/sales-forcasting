@@ -1,4 +1,11 @@
 import { NavLink } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Package,
+  DollarSign,
+  TrendingUp,
+  FileText,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import "./sidebar.css";
 
@@ -6,26 +13,28 @@ const Sidebar = () => {
   const { user } = useAuth();
 
   const links = [
-    { to: "/", label: "Dashboard", icon: "🏠" },
-    { to: "/products", label: "Products", icon: "📦" },
-    { to: "/sales", label: "Sales", icon: "💰" },
-    { to: "/forecast", label: "Forecast", icon: "📈" },
-    { to: "/reports", label: "Reports", icon: "📄" },
+    { to: "/", label: "Dashboard", Icon: LayoutDashboard },
+    { to: "/products", label: "Products", Icon: Package },
+    { to: "/sales", label: "Sales", Icon: DollarSign },
+    { to: "/forecast", label: "Forecast", Icon: TrendingUp },
+    { to: "/reports", label: "Reports", Icon: FileText },
   ];
 
   return (
     <aside className="sidebar">
-      {links.map((link) => (
+      {links.map(({ to, label, Icon }) => (
         <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.to === "/"}
+          key={to}
+          to={to}
+          end={to === "/"}
           className={({ isActive }) =>
             isActive ? "sidebar-link active" : "sidebar-link"
           }
         >
-          <span className="icon">{link.icon}</span>
-          <span className="label">{link.label}</span>
+          <span className="icon">
+            <Icon size={20} strokeWidth={2} />
+          </span>
+          <span className="label">{label}</span>
         </NavLink>
       ))}
     </aside>

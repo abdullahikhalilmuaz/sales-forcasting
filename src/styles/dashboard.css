@@ -41,3 +41,197 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   Dashboard Page + DashboardCard Component
+   ============================================ */
+
+/* ---------- Dashboard Page ---------- */
+.dashboard-page {
+  padding: 0;
+}
+
+.dashboard-page .page-title {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #111827;
+  font-weight: 700;
+}
+
+/* Grid of cards */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* Charts section */
+.charts-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.chart-box {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-box h3 {
+  margin-bottom: 14px;
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.page-loading,
+.empty-text {
+  color: #6b7280;
+  padding: 20px 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- DashboardCard Component ---------- */
+.dashboard-card {
+  background: white;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #3b82f6;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: white;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: 1.3rem;
+  color: #111827;
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-page .page-title {
+    font-size: 1.25rem;
+  }
+
+  .card-value {
+    font-size: 1.15rem;
+  }
+}
+
+/* ---------- DashboardCard Component ---------- */
+.dashboard-card {
+  background: white;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-left: 4px solid #3b82f6;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white; /* ← makes SVG icons white */
+}
+
+/* ensures lucide icons inherit the white color and proper size */
+.card-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-title {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.card-value {
+  font-size: 1.3rem;
+  color: #111827;
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
