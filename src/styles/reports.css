@@ -1,0 +1,70 @@
+@import "./Product.css";
+
+.range-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.range-tab {
+  padding: 8px 18px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.range-tab:hover {
+  border-color: #3b82f6;
+}
+
+.range-tab.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-card {
+  background: white;
+  padding: 18px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.summary-card p {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-card h4 {
+  margin-top: 8px;
+  font-size: 1.3rem;
+  color: #111827;
+}
+
+@media print {
+  .navbar,
+  .sidebar,
+  .primary-btn,
+  .range-tabs {
+    display: none !important;
+  }
+  .app-main {
+    padding: 0;
+  }
+  body {
+    background: white;
+  }
+}
