@@ -1,4 +1,4 @@
-import "./DashboardCard.css";
+import "../styles/dashboard.css";
 
 const DashboardCard = ({ title, value, icon, color }) => {
   return (
