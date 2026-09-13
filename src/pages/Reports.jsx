@@ -1,25 +1,35 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
 import "../styles/reports.css";
 
 const Reports = () => {
+  const toast = useToast();
   const [sales, setSales] = useState([]);
   const [range, setRange] = useState("daily");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSales = async () => {
-      const res = await API.get("/sales");
-      setSales(res.data);
+      try {
+        const res = await API.get("/sales");
+        setSales(res.data);
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to load reports");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchSales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filterByRange = () => {
     const now = new Date();
     return sales.filter((s) => {
       const d = new Date(s.saleDate);
-      if (range === "daily")
-        return d.toDateString() === now.toDateString();
+      if (range === "daily") return d.toDateString() === now.toDateString();
       if (range === "weekly") {
         const weekAgo = new Date(now);
         weekAgo.setDate(now.getDate() - 7);
@@ -43,7 +53,10 @@ const Reports = () => {
   const totalRevenue = filtered.reduce((a, s) => a + s.totalAmount, 0);
   const totalQty = filtered.reduce((a, s) => a + s.quantitySold, 0);
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    toast.info("Opening print dialog...");
+    setTimeout(() => window.print(), 200);
+  };
 
   return (
     <div className="reports-page">
@@ -92,7 +105,16 @@ const Reports = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="4">
+                  <div className="page-loading-full">
+                    <Spinner size={28} color="#3b82f6" />
+                    <span>Loading reports...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan="4" className="no-data">
                   No data for this range

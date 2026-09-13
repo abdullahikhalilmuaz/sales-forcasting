@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import DashboardCard from "../components/DashboardCard";
+import Spinner from "../components/Spinner";
+import { useToast } from "../components/ToastContext";
 import { Wallet, Package, ShoppingCart, TrendingUp, Star } from "lucide-react";
 import {
   BarChart,
@@ -16,6 +18,7 @@ import {
 import "../styles/dashboard.css";
 
 const Dashboard = () => {
+  const toast = useToast();
   const [summary, setSummary] = useState(null);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,15 +33,23 @@ const Dashboard = () => {
         setSummary(s.data);
         setSales(sl.data);
       } catch (err) {
-        console.error(err);
+        toast.error(err.response?.data?.message || "Failed to load dashboard");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <div className="page-loading">Loading dashboard...</div>;
+  if (loading) {
+    return (
+      <div className="page-loading-full">
+        <Spinner size={32} color="#3b82f6" />
+        <span>Loading dashboard...</span>
+      </div>
+    );
+  }
 
   const chartData = sales
     .slice(0, 10)

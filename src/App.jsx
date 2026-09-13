@@ -10,6 +10,7 @@ import Reports from "./pages/Reports";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AiStatusBanner from "./components/AiStatusBanner";
 import "./App.css";
 
 function App() {
@@ -23,6 +24,9 @@ function App() {
       <div className={user ? "app-layout" : ""}>
         {user && <Sidebar />}
         <main className={user ? "app-main" : ""}>
+          {/* Warms the AI service in the background as soon as the app loads. */}
+          <AiStatusBanner />
+
           <Routes>
             <Route
               path="/login"

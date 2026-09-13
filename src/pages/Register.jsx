@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
 import "../styles/login.css";
 
 const Register = () => {
   const { register } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -21,9 +24,12 @@ const Register = () => {
     setLoading(true);
     try {
       await register(form.name, form.email, form.password, form.role);
+      toast.success("Account created. Welcome!");
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      const msg = err.response?.data?.message || "Registration failed";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -71,7 +77,8 @@ const Register = () => {
           <option value="admin">Admin</option>
         </select>
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} className="btn-with-spinner">
+          {loading && <Spinner size={16} />}
           {loading ? "Creating..." : "Register"}
         </button>
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
 import {
   LineChart,
   Line,
@@ -17,6 +19,7 @@ import "../styles/forecast.css";
 
 const Forecast = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [history, setHistory] = useState([]);
@@ -28,6 +31,7 @@ const Forecast = () => {
   const [insights, setInsights] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [inventoryLoading, setInventoryLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -55,16 +59,21 @@ const Forecast = () => {
     fetchHistory();
   }, [selectedProduct]);
 
+  const fetchInventory = async () => {
+    setInventoryLoading(true);
+    try {
+      const res = await API.get("/forecast/inventory");
+      setInventory(res.data);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to load inventory");
+    } finally {
+      setInventoryLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        const res = await API.get("/forecast/inventory");
-        setInventory(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
     fetchInventory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const generateForecast = async () => {
@@ -81,8 +90,11 @@ const Forecast = () => {
       setRf(res.data.randomForest);
       setBestModel(res.data.bestModel);
       setInsights(res.data.insights);
+      toast.success("Forecast generated successfully");
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to generate forecast");
+      const msg = err.response?.data?.message || "Failed to generate forecast";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -90,80 +102,85 @@ const Forecast = () => {
 
   const downloadPdf = () => {
     if (!predictions.length || !metrics) return;
-    const doc = new jsPDF();
-    const productLabel = selectedProduct
-      ? products.find((p) => p._id === selectedProduct)?.name || "Product"
-      : "All Products";
+    try {
+      const doc = new jsPDF();
+      const productLabel = selectedProduct
+        ? products.find((p) => p._id === selectedProduct)?.name || "Product"
+        : "All Products";
 
-    doc.setFontSize(18);
-    doc.text("Sales Forecast Report", 14, 20);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Scope: ${productLabel}`, 14, 28);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34);
-    doc.text(
-      `Best model: ${bestModel === "randomForest" ? "Random Forest" : "Linear Regression"}`,
-      14,
-      40,
-    );
+      doc.setFontSize(18);
+      doc.text("Sales Forecast Report", 14, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Scope: ${productLabel}`, 14, 28);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34);
+      doc.text(
+        `Best model: ${bestModel === "randomForest" ? "Random Forest" : "Linear Regression"}`,
+        14,
+        40,
+      );
 
-    doc.setTextColor(0);
-    doc.setFontSize(12);
-    doc.text("Summary", 14, 52);
-    doc.setFontSize(10);
-    const summaryText = doc.splitTextToSize(insights?.summary || "", 180);
-    doc.text(summaryText, 14, 58);
+      doc.setTextColor(0);
+      doc.setFontSize(12);
+      doc.text("Summary", 14, 52);
+      doc.setFontSize(10);
+      const summaryText = doc.splitTextToSize(insights?.summary || "", 180);
+      doc.text(summaryText, 14, 58);
 
-    const afterSummary = 58 + summaryText.length * 5 + 6;
+      const afterSummary = 58 + summaryText.length * 5 + 6;
 
-    autoTable(doc, {
-      startY: afterSummary,
-      head: [["Month", "Predicted Sales"]],
-      body: predictions.map((p) => [p.label, p.predicted]),
-      theme: "grid",
-      headStyles: { fillColor: [59, 130, 246] },
-    });
+      autoTable(doc, {
+        startY: afterSummary,
+        head: [["Month", "Predicted Sales"]],
+        body: predictions.map((p) => [p.label, p.predicted]),
+        theme: "grid",
+        headStyles: { fillColor: [59, 130, 246] },
+      });
 
-    const afterForecast = doc.lastAutoTable.finalY + 10;
+      const afterForecast = doc.lastAutoTable.finalY + 10;
 
-    autoTable(doc, {
-      startY: afterForecast,
-      head: [["Model", "Test Set", "MAE", "MSE", "R²"]],
-      body: [
-        [
-          "Linear Regression",
-          "In-sample",
-          lr.insample.mae.toFixed(2),
-          lr.insample.mse.toFixed(2),
-          lr.insample.r2.toFixed(4),
+      autoTable(doc, {
+        startY: afterForecast,
+        head: [["Model", "Test Set", "MAE", "MSE", "R²"]],
+        body: [
+          [
+            "Linear Regression",
+            "In-sample",
+            lr.insample.mae.toFixed(2),
+            lr.insample.mse.toFixed(2),
+            lr.insample.r2.toFixed(4),
+          ],
+          [
+            "Linear Regression",
+            "Holdout",
+            lr.holdout.mae.toFixed(2),
+            lr.holdout.mse.toFixed(2),
+            lr.holdout.r2.toFixed(4),
+          ],
+          [
+            "Random Forest",
+            "In-sample",
+            rf.insample.mae.toFixed(2),
+            rf.insample.mse.toFixed(2),
+            rf.insample.r2.toFixed(4),
+          ],
+          [
+            "Random Forest",
+            "Holdout",
+            rf.holdout.mae.toFixed(2),
+            rf.holdout.mse.toFixed(2),
+            rf.holdout.r2.toFixed(4),
+          ],
         ],
-        [
-          "Linear Regression",
-          "Holdout",
-          lr.holdout.mae.toFixed(2),
-          lr.holdout.mse.toFixed(2),
-          lr.holdout.r2.toFixed(4),
-        ],
-        [
-          "Random Forest",
-          "In-sample",
-          rf.insample.mae.toFixed(2),
-          rf.insample.mse.toFixed(2),
-          rf.insample.r2.toFixed(4),
-        ],
-        [
-          "Random Forest",
-          "Holdout",
-          rf.holdout.mae.toFixed(2),
-          rf.holdout.mse.toFixed(2),
-          rf.holdout.r2.toFixed(4),
-        ],
-      ],
-      theme: "grid",
-      headStyles: { fillColor: [16, 185, 129] },
-    });
+        theme: "grid",
+        headStyles: { fillColor: [16, 185, 129] },
+      });
 
-    doc.save(`forecast-${productLabel.replace(/\s+/g, "-")}.pdf`);
+      doc.save(`forecast-${productLabel.replace(/\s+/g, "-")}.pdf`);
+      toast.success("PDF downloaded");
+    } catch (err) {
+      toast.error("Failed to generate PDF");
+    }
   };
 
   const combinedData = [
@@ -197,10 +214,11 @@ const Forecast = () => {
         <div className="header-actions">
           {user?.role === "admin" && (
             <button
-              className="primary-btn"
+              className="primary-btn btn-with-spinner"
               onClick={generateForecast}
               disabled={loading}
             >
+              {loading && <Spinner size={14} />}
               {loading ? "Generating..." : "Generate Forecast"}
             </button>
           )}
@@ -287,15 +305,29 @@ const Forecast = () => {
         </div>
       )}
 
-      {inventory.length > 0 && (
-        <div className="chart-box">
+      <div className="chart-box">
+        <div className="chart-box-header">
           <h3>Inventory Recommendations</h3>
-          <p className="plain-summary">
-            Each row compares next month&apos;s expected demand for a product
-            with how much stock you currently have. If demand is higher than
-            stock, the system recommends how much to restock.
-          </p>
-          <div className="table-wrapper">
+          <button
+            className="secondary-btn small-btn"
+            onClick={fetchInventory}
+            disabled={inventoryLoading}
+          >
+            {inventoryLoading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+        <p className="plain-summary">
+          Each row compares next month&apos;s expected demand for a product with
+          how much stock you currently have. If demand is higher than stock, the
+          system recommends how much to restock.
+        </p>
+        <div className="table-wrapper">
+          {inventoryLoading ? (
+            <div className="page-loading-full">
+              <Spinner size={28} color="#3b82f6" />
+              <span>Analysing inventory...</span>
+            </div>
+          ) : (
             <table className="data-table">
               <thead>
                 <tr>
@@ -324,9 +356,9 @@ const Forecast = () => {
                 ))}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
-      )}
+      </div>
 
       {predictions.length > 0 && (
         <>

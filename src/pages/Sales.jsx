@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 import "../styles/sales.css";
 
 const Sales = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState({
@@ -14,6 +18,10 @@ const Sales = () => {
   });
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const fetchData = async () => {
     try {
@@ -24,23 +32,28 @@ const Sales = () => {
       setSales(s.data);
       setProducts(p.data);
     } catch (err) {
-      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to load sales");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSaving(true);
     try {
       await API.post("/sales", {
         productId: form.productId,
         quantitySold: Number(form.quantitySold),
         saleDate: form.saleDate,
       });
+      toast.success("Sale recorded successfully");
       setForm({
         productId: "",
         quantitySold: "",
@@ -49,17 +62,27 @@ const Sales = () => {
       setShowForm(false);
       fetchData();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to record sale");
+      const msg = err.response?.data?.message || "Failed to record sale";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this sale?")) return;
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete._id;
+    setDeletingId(id);
     try {
       await API.delete(`/sales/${id}`);
+      toast.success("Sale deleted");
+      setConfirmDelete(null);
       fetchData();
     } catch (err) {
-      alert(err.response?.data?.message || "Delete failed");
+      toast.error(err.response?.data?.message || "Delete failed");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -120,11 +143,17 @@ const Sales = () => {
                 type="button"
                 className="secondary-btn"
                 onClick={() => setShowForm(false)}
+                disabled={saving}
               >
                 Cancel
               </button>
-              <button type="submit" className="primary-btn">
-                Save
+              <button
+                type="submit"
+                className="primary-btn btn-with-spinner"
+                disabled={saving}
+              >
+                {saving && <Spinner size={14} />}
+                {saving ? "Saving..." : "Save"}
               </button>
             </div>
           </form>
@@ -144,7 +173,16 @@ const Sales = () => {
             </tr>
           </thead>
           <tbody>
-            {sales.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="6">
+                  <div className="page-loading-full">
+                    <Spinner size={28} color="#3b82f6" />
+                    <span>Loading sales...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : sales.length === 0 ? (
               <tr>
                 <td colSpan="6" className="no-data">
                   No sales recorded yet
@@ -162,9 +200,10 @@ const Sales = () => {
                     <td>
                       <button
                         className="action-btn delete"
-                        onClick={() => handleDelete(s._id)}
+                        onClick={() => setConfirmDelete(s)}
+                        disabled={deletingId === s._id}
                       >
-                        Delete
+                        {deletingId === s._id ? "Deleting..." : "Delete"}
                       </button>
                     </td>
                   )}
@@ -174,6 +213,21 @@ const Sales = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete sale?"
+        message={
+          confirmDelete
+            ? `Delete the sale of ${confirmDelete.quantitySold} × ${confirmDelete.productId?.name || "product"} on ${new Date(confirmDelete.saleDate).toLocaleDateString()}?`
+            : ""
+        }
+        confirmLabel="Delete"
+        danger
+        loading={deletingId === confirmDelete?._id}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };

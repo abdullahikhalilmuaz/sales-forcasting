@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
 import "../styles/login.css";
 
 const Login = () => {
   const { login } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -16,9 +19,12 @@ const Login = () => {
     setLoading(true);
     try {
       await login(form.email, form.password);
+      toast.success("Welcome back!");
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      const msg = err.response?.data?.message || "Login failed";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -48,7 +54,8 @@ const Login = () => {
           required
         />
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading} className="btn-with-spinner">
+          {loading && <Spinner size={16} />}
           {loading ? "Logging in..." : "Login"}
         </button>
 

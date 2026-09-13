@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/ToastContext";
+import Spinner from "../components/Spinner";
+import ConfirmDialog from "../components/ConfirmDialog";
 import "../styles/product.css";
 
 const Products = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState(null);
@@ -16,18 +20,25 @@ const Products = () => {
   });
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const fetchProducts = async () => {
     try {
       const res = await API.get("/products");
       setProducts(res.data);
     } catch (err) {
-      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to load products");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const resetForm = () => {
@@ -40,6 +51,7 @@ const Products = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSaving(true);
     try {
       const payload = {
         name: form.name,
@@ -49,13 +61,19 @@ const Products = () => {
       };
       if (editing) {
         await API.put(`/products/${editing}`, payload);
+        toast.success(`"${payload.name}" updated`);
       } else {
         await API.post("/products", payload);
+        toast.success(`"${payload.name}" added`);
       }
       resetForm();
       fetchProducts();
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to save");
+      const msg = err.response?.data?.message || "Failed to save";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -70,13 +88,23 @@ const Products = () => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this product?")) return;
+  const confirmDeleteProduct = (p) => {
+    setConfirmDelete(p);
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    const id = confirmDelete._id;
+    setDeletingId(id);
     try {
       await API.delete(`/products/${id}`);
+      toast.success(`"${confirmDelete.name}" deleted`);
+      setConfirmDelete(null);
       fetchProducts();
     } catch (err) {
-      alert(err.response?.data?.message || "Delete failed");
+      toast.error(err.response?.data?.message || "Delete failed");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -153,11 +181,17 @@ const Products = () => {
                 type="button"
                 className="secondary-btn"
                 onClick={resetForm}
+                disabled={saving}
               >
                 Cancel
               </button>
-              <button type="submit" className="primary-btn">
-                {editing ? "Update" : "Add"}
+              <button
+                type="submit"
+                className="primary-btn btn-with-spinner"
+                disabled={saving}
+              >
+                {saving && <Spinner size={14} />}
+                {saving ? "Saving..." : editing ? "Update" : "Add"}
               </button>
             </div>
           </form>
@@ -176,7 +210,16 @@ const Products = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="5">
+                  <div className="page-loading-full">
+                    <Spinner size={28} color="#3b82f6" />
+                    <span>Loading products...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan="5" className="no-data">
                   No products found
@@ -199,9 +242,10 @@ const Products = () => {
                       </button>
                       <button
                         className="action-btn delete"
-                        onClick={() => handleDelete(p._id)}
+                        onClick={() => confirmDeleteProduct(p)}
+                        disabled={deletingId === p._id}
                       >
-                        Delete
+                        {deletingId === p._id ? "Deleting..." : "Delete"}
                       </button>
                     </td>
                   )}
@@ -211,6 +255,21 @@ const Products = () => {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete product?"
+        message={
+          confirmDelete
+            ? `This will permanently remove "${confirmDelete.name}" from the catalog. Sales history for this product will remain but show as "Deleted".`
+            : ""
+        }
+        confirmLabel="Delete"
+        danger
+        loading={deletingId === confirmDelete?._id}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };
