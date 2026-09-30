@@ -13,7 +13,6 @@ const Register = () => {
     name: "",
     email: "",
     password: "",
-    role: "staff",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,8 @@ const Register = () => {
     setError("");
     setLoading(true);
     try {
-      await register(form.name, form.email, form.password, form.role);
+      // Role is always "staff" — new users cannot self-register as admin.
+      await register(form.name, form.email, form.password, "staff");
       toast.success("Account created. Welcome!");
       navigate("/");
     } catch (err) {
@@ -67,15 +67,6 @@ const Register = () => {
           minLength={6}
           required
         />
-
-        <label>Role</label>
-        <select
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
-        >
-          <option value="staff">Sales Staff</option>
-          <option value="admin">Admin</option>
-        </select>
 
         <button type="submit" disabled={loading} className="btn-with-spinner">
           {loading && <Spinner size={16} />}
